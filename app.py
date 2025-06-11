@@ -28,6 +28,8 @@ df = df.rename(columns={"student_id": "ID do Estudante",
     "extracurricular_participation": "Participação em Atividades Extracurriculares",
     "exam_score": "Nota da Prova"})
 
+
+
 # Configurações iniciais do Streamlit
 st.set_page_config(page_title="Student Habits", layout="wide")
 
@@ -37,7 +39,6 @@ st.markdown(
     unsafe_allow_html=True) 
 
 ## Seleção de Dados
-
 with st.sidebar:
  st.sidebar.header("Filtros de Seleção")
  select_genero = st.sidebar.multiselect("Gênero:", options=df['Gênero'].unique(), default=list(df['Gênero'].unique()))
@@ -84,14 +85,23 @@ kpi4.metric(label="Quantidade de Estudante", value=quantidade_estudate)
 st.write("As Analises a seguir refletem uma banco de dados simulado que comtempla cerca de mil registros com hábitos sociais e como eles afetam o desempenho educacional.")
 
 st.markdown("### Nossos dados são compostos por essas #features")
+
+## Análises exploratória 
 st.dataframe(filtered_df.head(10))
 
+filtered_df.info()
+
+filtered_df.describe()
+
+
+## Gráficos com a distribuição por gênero e por escolaridade dos pais
 st.write("### Podemos observar a distruição do dataframe por gênero e destaca uma pequena concetração classificado como outros")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("### Por Escolaridade dos Pais")
+    st.write("As escolaridades ficam bem concentradas entre Bachelor e High School, indicando que menos de 20% dos pais têm formação Master.")
     qtd_estudates_escolaridade_pais = filtered_df.groupby('Escolaridade dos Pais')['ID do Estudante'].count().reset_index()
     fig_product = px.bar(qtd_estudates_escolaridade_pais, x='Escolaridade dos Pais', y='ID do Estudante', title="Estudate por Formação do Pais",
                          labels={'Escolaridade dos Pais': 'Escolaridade dos Pais', 'ID do Estudante': 'Quantidade'})
@@ -100,44 +110,63 @@ with col1:
 
 with col2:
     st.markdown("### Por Gênero do Estudates")
+    st.write("Uma pequena quantidade de estudates classificados como outros.")
     qtd_estudates_genero = filtered_df.groupby('Gênero')['ID do Estudante'].count().reset_index()
-    fig_product = px.pie(qtd_estudates_genero, values='ID do Estudante', title="Estudate por Formação do Pais",
+    fig_product = px.pie(qtd_estudates_genero, values='ID do Estudante', names='Gênero', title="Estudate por Gênero",
                          labels={'Gênero': 'Gênero dos Estudates', 'ID do Estudante': 'Quantidade'})
     st.plotly_chart(fig_product, use_container_width=True)
 
 
-
+## Gráficos com a distribuição por qualidade de internet e dieta
 
 col3, col4 = st.columns(2)
 
 with col3:
     st.markdown("### Por Qualidade da Internet")
+    st.write("Uma pequena, mas significativa, parcela dos estudantes possui qualidade de internet considerada 'poor'")
     qtd_estudates_internet = filtered_df.groupby('Qualidade da Internet')['ID do Estudante'].count().reset_index()
-    fig_product = px.pie(qtd_estudates_internet, values='ID do Estudante', title="Estudate por Qualidade da Internet",
+    fig_product = px.pie(qtd_estudates_internet, values='ID do Estudante', names='Qualidade da Internet', title="Estudate por Qualidade da Internet",
                          labels={'Qualidade da Internet': 'Qualidade da Internet', 'ID do Estudante': 'Quantidade'})
     st.plotly_chart(fig_product, use_container_width=True)
 
 with col4:
     st.markdown("### Por Qualidade da Dieta")
+    st.write("A grade maioria dos nossos estudantes tem uma dieta 'fair' ou 'Good'")
     qtd_estudates_dieta = filtered_df.groupby('Qualidade da Dieta')['ID do Estudante'].count().reset_index()
     fig_product = px.bar(qtd_estudates_dieta, x='Qualidade da Dieta', y='ID do Estudante', title="Estudate por Qualidade da Dieta",
                          labels={'Qualidade da Dieta': 'Qualidade da Dieta', 'ID do Estudante': 'Quantidade'})
     st.plotly_chart(fig_product, use_container_width=True)
 
+
+
+
+col5, col6 = st.columns(2)
 # Aqui mostro um gráfico de barras do top 10 estudantes com mais horas de estudo
-st.markdown("## Média de Horas de Estudo por Dia")
-avg = filtered_df.groupby('ID do Estudante')['Horas de Estudo por Dia'].mean().sort_values(ascending=False).head(10)
-fig, ax = plt.subplots(figsize=(10, 8))
-avg.sort_values().plot(kind='barh', ax=ax, color='skyblue')
-ax.set_xlabel('Média de Horas de Estudo por dia')
-ax.set_ylabel("ID do Estudante")
-ax.set_title("Top 10 Estudantes por Horas de Estudo")
-st.pyplot(fig)
+with col5:
+   st.markdown("### Média de Horas de Estudo por Dia")
+   st.write("É possível observar os estudantes que mais se destacam em relação à média de horas de estudo por dia.")
+   avg = filtered_df.groupby('ID do Estudante')['Horas de Estudo por Dia'].mean().sort_values(ascending=False).head(10)
+   fig1, ax = plt.subplots(figsize=(8, 7))
+   avg.sort_values().plot(kind='barh', ax=ax, color='skyblue')
+   ax.set_xlabel('Média de Horas de Estudo por dia')
+   ax.set_ylabel("ID do Estudante")
+   ax.set_title("Top 10 Estudantes por Horas de Estudo")
+   st.pyplot(fig1)
+
+# Tecnica boxplot
+with col6:
+   st.markdown("#### Técnica utilizada para identificar possíveis outliers")
+   st.write("A partir da análise do boxplot, foi identificado um possível outlier na categoria 'Bachelor', destacando-se por apresentar uma nota discrepante em relação aos demais valores.")
+   fig2, ax = plt.subplots(figsize=(8, 6))
+   sns.boxplot(data=filtered_df, x='Escolaridade dos Pais', y='Nota da Prova', palette='Set2', ax=ax)
+   st.pyplot(fig2)
+
 
 
 
 ##  Foi usando uma tecnica para verificar correlação entre dados númericos
-st.markdown("### Correlação entre váriaveis númericas")
+st.markdown("### Análise da Correlação entre Variáveis")
+st.write("Foi encontrada uma correlação bastante relevante entre as horas de estudo e as notas da prova. Isso indica que, quanto mais os alunos estudam, maiores são as suas notas.")
 df_number = filtered_df.select_dtypes(include='number')
 st.dataframe(df_number.corr().style.background_gradient(cmap='coolwarm'))
 
@@ -153,33 +182,46 @@ st.pyplot(fig)
 
 
 
-# Dividindo os dados em treino e teste
+## MODELO DE PREDIÇÃO DE NOTAS COM RAMDOM FOREST
 
+
+# Separando o target
 X = df_number.drop(columns=['Nota da Prova'])
 y = df_number['Nota da Prova']
+
+# Divisão treino e teste
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-
-# Modelo de ML
-
+# treinando o modelo
 model = RandomForestRegressor(n_estimators=10, random_state=42)
 model.fit(X_train, y_train)
 
-
-# Previsão
+# Predict
 y_pred = model.predict(X_test)
 
-
-# Métricas de Avaliação
-
+# Métricas de avaliação do modelo
 mae = mean_absolute_error(y_test, y_pred)
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
+
 st.markdown("### Avaliação do Modelo")
-st.write(f"**Mean Absolute Error (MAE):** {mae:,.2f}")
-st.write(f"**Mean Squared Error (MSE):** {mse:,.2f}")
-st.write(f"**R-squared (R2):** {r2:.2f}")
+st.write(f"Mean Absolute Error (MAE):** {mae:,.2f} - Média dos erros absolutos entre a nota prevista e a nota real.")
+st.write(f"Mean Squared Error (MSE):** {mse:,.2f} - Média dos quadrados dos erros (diferenças entre notas reais e previstas")
+st.write(f"R-squared (R2):** {r2:.2f} - Proporção da variabilidade da nota que o modelo consegue explicar.")
+
+st.write("## O modelo aplicado explica 83% da variabilidade das notas.")
+
+# Visualizar comparação entre valores reais e previstos
+fig3, ax = plt.subplots(figsize=(8,5))
+ax.scatter(y_test, y_pred, alpha=0.7)
+ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+ax.set_xlabel('Notas Reais')
+ax.set_ylabel('Notas Previstas')
+ax.set_title('Comparação entre Notas Reais e Previstas')
+st.pyplot(fig3)
+
+
 
 # Explicação do Streamlit
 st.markdown("## Sobre o Streamlit")
